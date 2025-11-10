@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema real para apps em Jetpack Compose -->
+    <style name="Theme.Controle_Gastos" parent="Theme.Material3.DayNight">
+        <!-- Se quiser a status bar transparente -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+</resources>
