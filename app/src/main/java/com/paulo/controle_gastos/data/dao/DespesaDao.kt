@@ -1,22 +1,24 @@
 package com.paulo.controle_gastos.data.dao
 
 import androidx.room.Dao
-import androidx.room.Delete // <-- Precisa deste import
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.paulo.controle_gastos.model.Despesa
+import com.paulo.controle_gastos.data.entity.DespesaEntity
 import kotlinx.coroutines.flow.Flow
+
 
 @Dao
 interface DespesaDao {
 
-    @Query("SELECT * FROM despesas ORDER BY data DESC")
-    fun getAll(): Flow<List<Despesa>>
+    @Query("SELECT * FROM despesas")
+    fun getAll(): Flow<List<DespesaEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(despesa: Despesa)
+    suspend fun insert(despesa: DespesaEntity)
 
-    @Delete // <-- Precisa da anotação
-    suspend fun delete(despesa: Despesa) // Função que causou o erro
+    @Delete
+    suspend fun delete(despesa: DespesaEntity)
 }
+

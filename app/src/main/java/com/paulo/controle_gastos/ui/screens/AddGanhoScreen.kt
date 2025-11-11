@@ -1,0 +1,146 @@
+package com.paulo.controle_gastos.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+// Remova os imports do Scaffold, TopAppBar, Icon, IconButton, ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.paulo.controle_gastos.model.Conta //
+import com.paulo.controle_gastos.model.Ganho //
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel //
+import java.util.UUID
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddGanhoScreen(
+    nav: NavController,
+    vm: FinanceViewModel
+) {
+    // --- 1. Obter dados do ViewModel ---
+    val uiState by vm.uiState.collectAsState()
+    val contas = uiState.contas //
+
+    // --- 2. Estados do formulário ---
+    var descricao by remember { mutableStateOf("") }
+    var valor by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var contaSelecionada by remember { mutableStateOf<Conta?>(null) }
+
+    LaunchedEffect(contas) {
+        if (contaSelecionada == null && contas.isNotEmpty()) {
+            contaSelecionada = contas.first()
+        }
+    }
+
+    // --- 3. Construir a UI (SEM SCAFFOLD) ---
+    // O padding é passado pelo modifier do AppNavHost no MainActivity
+    Column(
+        modifier = Modifier
+            .padding(16.dp) // Adicionamos um padding simples
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+
+        // --- Campo Descrição ---
+        OutlinedTextField(
+            value = descricao,
+            onValueChange = { descricao = it },
+            label = { Text("Descrição (ex: Salário)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // --- Campo Valor ---
+        OutlinedTextField(
+            value = valor,
+            onValueChange = { valor = it },
+            label = { Text("Valor") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            prefix = { Text("R$ ") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // --- Dropdown de Contas ---
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = contaSelecionada?.nome ?: "Selecione uma conta", //
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                label = { Text("Conta de Destino") }
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                if (contas.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Cadastre uma conta primeiro") },
+                        onClick = { expanded = false }
+                    )
+                }
+                contas.forEach { conta ->
+                    DropdownMenuItem(
+                        text = { Text(conta.nome) }, //
+                        onClick = {
+                            contaSelecionada = conta
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Botão Salvar ---
+        Button(
+            onClick = {
+                val novoGanho = Ganho(
+                    id = UUID.randomUUID().toString(),
+                    data = System.currentTimeMillis(),
+                    descricao = descricao,
+                    valor = valor.toDoubleOrNull() ?: 0.0,
+                    contaId = contaSelecionada!!.id
+                ) //
+
+                vm.addGanho(novoGanho) //
+                nav.popBackStack() // Volta para a tela anterior
+            },
+            enabled = descricao.isNotBlank() && valor.isNotBlank() && contaSelecionada != null,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Salvar Ganho")
+        }
+    }
+}

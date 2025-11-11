@@ -1,44 +1,57 @@
 package com.paulo.controle_gastos.model
 
-import android.util.Log
 import java.util.UUID
 
 object ExpenseParser {
 
-    private val NUBANK_REGEX = Regex("Compra aprovada no seu NUBANK R\\$ (\\d+,\\d{2}) em (.+)\\.")
-    private val ITAU_REGEX = Regex("Compra de R\\$(\\d+,\\d{2}) aprovada em .+ na (.+)\\.")
+    // ✅ Método novo que o NotificationReaderService usa
+    fun parseMessage(titulo: String, texto: String, contaIdPadrao: String): Despesa? {
+        val mensagem = "$titulo $texto".lowercase()
 
-    fun parseMessage(remetente: String, mensagem: String, contaIdPadrao: String): Despesa? {
-        var match: MatchResult? = null
-        var metodoPagamento = "Crédito"
-
-        if (remetente.contains("NUBANK", true) || mensagem.contains("NUBANK", true)) {
-            match = NUBANK_REGEX.find(mensagem)
-            if (mensagem.contains("Débito", true)) metodoPagamento = "Débito"
-            if (mensagem.contains("Pix", true)) metodoPagamento = "Pix"
-
-        } else if (remetente.contains("ITAUCARD", true) || mensagem.contains("ITAUCARD", true)) {
-            match = ITAU_REGEX.find(mensagem)
+        // Caso a notificação não parece ser compra
+        if (!mensagem.contains("compra") && !mensagem.contains("valor")) {
+            return null
         }
 
-        if (match != null && match.groupValues.size >= 3) {
-            try {
-                val valorString = match.groupValues[1].replace(",", ".")
-                val valorDouble = valorString.toDouble()
-                val local = match.groupValues[2].trimEnd('.')
+        // Extrai valor
+        val valorRegex = Regex("""r\$?\s*([\d.,]+)""")
+        val valor = valorRegex.find(mensagem)
+            ?.groupValues?.get(1)
+            ?.replace(",", ".")
+            ?.toDoubleOrNull() ?: return null
 
-                return Despesa(
-                    id = UUID.randomUUID().toString(),
-                    data = System.currentTimeMillis(),
-                    local = local,
-                    valor = valorDouble,
-                    contaId = contaIdPadrao,
-                    metodoPagamento = metodoPagamento
-                )
-            } catch (e: Exception) {
-                Log.e("ExpenseParser", "Erro ao converter valor", e)
-            }
+        val local = when {
+            mensagem.contains("no estabelecimento") ->
+                mensagem.substringAfter("no estabelecimento").trim().take(40)
+            mensagem.contains("em ") ->
+                mensagem.substringAfter("em ").trim().take(40)
+            else -> "Local desconhecido"
         }
-        return null
+
+        return Despesa(
+            id = UUID.randomUUID().toString(),
+            data = System.currentTimeMillis(),
+            local = local,
+            valor = valor,
+            metodoPagamento = "Cartão",
+            contaId = contaIdPadrao
+        )
+    }
+
+    // ✅ Você pode manter este se quiser, não atrapalha
+    fun fromText(texto: String, contaId: String): Despesa {
+        val id = UUID.randomUUID().toString()
+        val data = System.currentTimeMillis()
+        val local = "Desconhecido"
+        val valor = 0.0
+        val metodo = "Dinheiro"
+        return Despesa(
+            id = id,
+            data = data,
+            local = local,
+            valor = valor,
+            metodoPagamento = metodo,
+            contaId = contaId
+        )
     }
 }
