@@ -1,6 +1,6 @@
 package com.paulo.controle_gastos.data.repository
 
-import com.paulo.controle_gastos.data.toEntity
+
 import com.paulo.controle_gastos.data.toModel
 import com.paulo.controle_gastos.data.dao.ContaDao
 import com.paulo.controle_gastos.data.dao.DespesaDao
