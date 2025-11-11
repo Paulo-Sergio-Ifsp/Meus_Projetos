@@ -3,29 +3,31 @@ package com.paulo.controle_gastos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding // ✅ IMPORTADO
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack // ✅ IMPORTADO
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton // ✅ IMPORTADO
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier // ✅ IMPORTADO
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.currentBackStackEntryAsState // ✅ IMPORTADO
+import androidx.compose.ui.Modifier
+// ✅ VERIFIQUE ESTES IMPORTS
+import androidx.lifecycle.viewmodel.compose.viewModel // Importa a função 'viewModel()'
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.paulo.controle_gastos.ui.components.MultiActionFab
 import com.paulo.controle_gastos.ui.navigation.AppNavHost
 import com.paulo.controle_gastos.ui.navigation.Dest
 import com.paulo.controle_gastos.ui.theme.Controle_GastosTheme
-import com.paulo.controle_gastos.viewmodel.FinanceViewModel
+// ✅ ESTE É O IMPORT MAIS IMPORTANTE
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel // Importa a SUA classe
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,28 +36,23 @@ class MainActivity : ComponentActivity() {
 
       Controle_GastosTheme {
 
-        // ✅ ViewModel e Repository (Seu código estava OK)
+        // ✅ ViewModel e Repository
         val app = application as FinanceApp
+
+        // ✅ LINHA 40: A chamada que estava falhando
+        // Ela usa o 'viewModel' importado e o 'FinanceViewModel' importado
         val vm: FinanceViewModel =
           viewModel(factory = FinanceViewModel.provideFactory(app.repository))
 
-        // --- CORREÇÕES AQUI ---
-
-        // 1. Definir o NavController
         val nav = rememberNavController()
-
-        // 2. Ler a rota atual (como você tentou fazer)
         val navBackStackEntry by nav.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-
-        // (A variável 'var current' foi removida, não precisamos dela)
 
         @OptIn(ExperimentalMaterial3Api::class)
         Scaffold(
           topBar = {
             TopAppBar(
               title = {
-                // Define o título baseado na rota atual
                 Text(
                   when (currentRoute) {
                     Dest.Home.route -> "Início"
@@ -67,10 +64,9 @@ class MainActivity : ComponentActivity() {
                   }
                 )
               },
-              // Adiciona um botão "Voltar" nas telas internas
               navigationIcon = {
                 if (currentRoute != Dest.Home.route && currentRoute != Dest.Contas.route) {
-                  IconButton(onClick = { nav.popBackStack() }) { // Usa 'nav'
+                  IconButton(onClick = { nav.popBackStack() }) {
                     Icon(Icons.Default.ArrowBack, "Voltar")
                   }
                 }
@@ -78,14 +74,12 @@ class MainActivity : ComponentActivity() {
             )
           },
           bottomBar = {
-            // Esconde a BottomBar se não estivermos na Home ou Contas
             if (currentRoute == Dest.Home.route || currentRoute == Dest.Contas.route) {
               NavigationBar {
-
                 NavigationBarItem(
-                  selected = currentRoute == Dest.Home.route, // Usa 'currentRoute'
+                  selected = currentRoute == Dest.Home.route,
                   onClick = {
-                    nav.navigate(Dest.Home.route) { // Usa 'nav'
+                    nav.navigate(Dest.Home.route) {
                       launchSingleTop = true
                       restoreState = true
                     }
@@ -93,11 +87,10 @@ class MainActivity : ComponentActivity() {
                   icon = { Icon(Icons.Default.Home, null) },
                   label = { Text("Início") }
                 )
-
                 NavigationBarItem(
-                  selected = currentRoute == Dest.Contas.route, // Usa 'currentRoute'
+                  selected = currentRoute == Dest.Contas.route,
                   onClick = {
-                    nav.navigate(Dest.Contas.route) { // Usa 'nav'
+                    nav.navigate(Dest.Contas.route) {
                       launchSingleTop = true
                       restoreState = true
                     }
@@ -109,27 +102,19 @@ class MainActivity : ComponentActivity() {
             }
           },
           floatingActionButton = {
-            // Esconde o FAB se não estivermos na Home ou Contas
             if (currentRoute == Dest.Home.route || currentRoute == Dest.Contas.route) {
               MultiActionFab(
-                onAddContaClick = {
-                  nav.navigate(Dest.AddAccount.route) // Usa 'nav'
-                },
-                onAddGanhoClick = {
-                  nav.navigate(Dest.AddGanho.route) // Usa 'nav'
-                },
-                onAddDespesaClick = {
-                  nav.navigate(Dest.AddDespesa.route) // Usa 'nav'
-                }
+                onAddContaClick = { nav.navigate(Dest.AddAccount.route) },
+                onAddGanhoClick = { nav.navigate(Dest.AddGanho.route) },
+                onAddDespesaClick = { nav.navigate(Dest.AddDespesa.route) }
               )
             }
           }
         ) { padding ->
           AppNavHost(
-            navController = nav, // Passa 'nav'
+            navController = nav,
             vm = vm,
-            // 3. Aplica o padding ao conteúdo da tela
-            modifier = Modifier.padding(padding) //
+            modifier = Modifier.padding(padding)
           )
         }
       }

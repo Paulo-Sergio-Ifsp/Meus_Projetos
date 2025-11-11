@@ -13,10 +13,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+// 1. O UiState (sem mudanças na estrutura)
 data class FinanceUiState(
     val despesas: List<Despesa> = emptyList(),
     val ganhos: List<Ganho> = emptyList(),
-    val contas: List<Conta> = emptyList()
+    val contas: List<Conta> = emptyList(),
+
+    val saldoTotal: Double = 0.0,
+    val ganhosTotais: Double = 0.0,
+    val despesasTotais: Double = 0.0
 )
 
 class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() {
@@ -26,17 +31,50 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
+
+            // 2. O combine com a LÓGICA CORRIGIDA
             combine(
                 repository.despesas,
                 repository.ganhos,
                 repository.contas
-            ) { d, g, c ->
-                FinanceUiState(despesas = d, ganhos = g, contas = c)
+            ) { despesasLista, ganhosLista, contasList ->
+
+                // --- A Lógica Antiga (simplificada) ---
+                // val saldo = contasList.sumOf { it.saldoInicial }
+                // val ganhos = ganhosLista.sumOf { it.valor }
+                // val despesas = despesasLista.sumOf { it.valor }
+
+                // --- ✅ A NOVA LÓGICA ---
+
+                // Totais para o Dashboard (barra de progresso)
+                val ganhosDashboard = ganhosLista.sumOf { it.valor }
+                val despesasDashboard = despesasLista.sumOf { it.valor }
+
+                // Totais para o Saldo Real (o "saldo vivo")
+                val totalSaldoInicial = contasList.sumOf { it.saldoInicial }
+                val totalGanhos = ganhosLista.sumOf { it.valor }
+
+                // Soma apenas as despesas que saem do saldo (não-cartão)
+                val despesasDebitadas = despesasLista
+                    .filter { it.metodoPagamento.lowercase() != "cartão" }
+                    .sumOf { it.valor }
+
+                // O cálculo do saldo real que você sugeriu
+                val saldoReal = totalSaldoInicial + totalGanhos - despesasDebitadas
+
+                FinanceUiState(
+                    despesas = despesasLista,
+                    ganhos = ganhosLista,
+                    contas = contasList,
+                    saldoTotal = saldoReal, // ✅ Saldo "vivo"
+                    ganhosTotais = ganhosDashboard, // Total para a barra
+                    despesasTotais = despesasDashboard // Total para a barra
+                )
             }.collect { _uiState.value = it }
         }
     }
 
-    // Writes
+    // --- Funções de Escrita (sem mudanças) ---
     fun addDespesa(d: Despesa) = viewModelScope.launch { repository.addDespesa(d) }
     fun addGanho(g: Ganho)     = viewModelScope.launch { repository.addGanho(g) }
     fun addConta(c: Conta)     = viewModelScope.launch { repository.addConta(c) }
@@ -45,11 +83,12 @@ class FinanceViewModel(private val repository: FinanceRepository) : ViewModel() 
     fun deleteGanho(g: Ganho)     = viewModelScope.launch { repository.deleteGanho(g) }
     fun deleteConta(c: Conta)     = viewModelScope.launch { repository.deleteConta(c) }
 
+    // --- 3. O 'companion object' (sem mudanças) ---
     companion object {
         fun provideFactory(repository: FinanceRepository): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    @Suppress("UNCHECKED_CAST")
                     return FinanceViewModel(repository) as T
                 }
             }
