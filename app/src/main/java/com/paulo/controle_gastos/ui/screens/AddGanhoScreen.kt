@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-// Remova os imports do Scaffold, TopAppBar, Icon, IconButton, ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,9 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.paulo.controle_gastos.model.Conta //
-import com.paulo.controle_gastos.model.Ganho //
-import com.paulo.controle_gastos.viewmodel.FinanceViewModel //
+import com.paulo.controle_gastos.model.Conta
+import com.paulo.controle_gastos.model.Ganho
+import com.paulo.controle_gastos.util.FormatUtils
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +40,7 @@ fun AddGanhoScreen(
 ) {
     // --- 1. Obter dados do ViewModel ---
     val uiState by vm.uiState.collectAsState()
-    val contas = uiState.contas //
+    val contas = uiState.contas
 
     // --- 2. Estados do formulário ---
     var descricao by remember { mutableStateOf("") }
@@ -54,11 +54,14 @@ fun AddGanhoScreen(
         }
     }
 
+    // Validação: habilita botão somente se valor parseável e descrição + conta válidas
+    val parsedValor = FormatUtils.parseUserDecimal(valor)
+    val salvarHabilitado = descricao.isNotBlank() && !valor.isBlank() && parsedValor != null && contaSelecionada != null
+
     // --- 3. Construir a UI (SEM SCAFFOLD) ---
-    // O padding é passado pelo modifier do AppNavHost no MainActivity
     Column(
         modifier = Modifier
-            .padding(16.dp) // Adicionamos um padding simples
+            .padding(16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -74,9 +77,12 @@ fun AddGanhoScreen(
         // --- Campo Valor ---
         OutlinedTextField(
             value = valor,
-            onValueChange = { valor = it },
+            onValueChange = { input ->
+                // Aceita entrada livre; fazemos parsing robusto ao salvar
+                valor = input
+            },
             label = { Text("Valor") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             prefix = { Text("R$ ") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -87,7 +93,7 @@ fun AddGanhoScreen(
             onExpandedChange = { expanded = !expanded }
         ) {
             OutlinedTextField(
-                value = contaSelecionada?.nome ?: "Selecione uma conta", //
+                value = contaSelecionada?.nome ?: "Selecione uma conta",
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = {
@@ -111,7 +117,7 @@ fun AddGanhoScreen(
                 }
                 contas.forEach { conta ->
                     DropdownMenuItem(
-                        text = { Text(conta.nome) }, //
+                        text = { Text(conta.nome) },
                         onClick = {
                             contaSelecionada = conta
                             expanded = false
@@ -126,18 +132,19 @@ fun AddGanhoScreen(
         // --- Botão Salvar ---
         Button(
             onClick = {
+                val amount = FormatUtils.parseUserDecimal(valor) ?: 0.0
                 val novoGanho = Ganho(
                     id = UUID.randomUUID().toString(),
                     data = System.currentTimeMillis(),
-                    descricao = descricao,
-                    valor = valor.toDoubleOrNull() ?: 0.0,
+                    descricao = descricao.trim(),
+                    valor = amount,
                     contaId = contaSelecionada!!.id
-                ) //
+                )
 
-                vm.addGanho(novoGanho) //
+                vm.addGanho(novoGanho)
                 nav.popBackStack() // Volta para a tela anterior
             },
-            enabled = descricao.isNotBlank() && valor.isNotBlank() && contaSelecionada != null,
+            enabled = salvarHabilitado,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Salvar Ganho")

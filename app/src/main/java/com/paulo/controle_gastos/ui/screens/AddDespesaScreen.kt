@@ -29,6 +29,7 @@ import androidx.navigation.NavController
 import com.paulo.controle_gastos.model.Conta
 import com.paulo.controle_gastos.model.Despesa
 import com.paulo.controle_gastos.model.TipoConta
+import com.paulo.controle_gastos.util.FormatUtils
 import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.util.UUID
 
@@ -40,7 +41,6 @@ private val metodoParaTipoConta = mapOf(
     "Cartão de Crédito" to listOf(TipoConta.CARTAO_CREDITO)
 )
 private val metodosDePagamento = listOf("Cartão de Crédito", "Débito", "Pix", "Dinheiro")
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +56,7 @@ fun AddDespesaScreen(
     var local by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
 
-    // --- ✅ 3. LÓGICA ATUALIZADA (O SEU DESIGN) ---
+    // --- 3. LÓGICA ATUALIZADA (O SEU DESIGN) ---
 
     // Dropdown 1: Método de Pagamento
     var metodoSelecionado by remember { mutableStateOf(metodosDePagamento.first()) }
@@ -69,13 +69,14 @@ fun AddDespesaScreen(
 
     // --- Efeito que liga os dois dropdowns ---
     LaunchedEffect(metodoSelecionado, todasAsContas) {
-        // 1. Filtra a lista de contas com base no método
         val tiposPermitidos = metodoParaTipoConta[metodoSelecionado] ?: emptyList()
         contasFiltradas = todasAsContas.filter { it.tipo in tiposPermitidos }
-
-        // 2. Auto-seleciona a primeira conta da nova lista
         contaSelecionada = contasFiltradas.firstOrNull()
     }
+
+    // --- Validação: habilita botão somente se valor parseável e local preenchido e conta selecionada ---
+    val parsedValor = FormatUtils.parseUserDecimal(valor)
+    val salvarHabilitado = local.isNotBlank() && !valor.isBlank() && parsedValor != null && contaSelecionada != null
 
     // --- 4. UI (SEM SCAFFOLD) ---
     Column(
@@ -96,9 +97,11 @@ fun AddDespesaScreen(
         // --- Campo Valor ---
         OutlinedTextField(
             value = valor,
-            onValueChange = { valor = it },
+            onValueChange = { input ->
+                valor = input
+            },
             label = { Text("Valor") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             prefix = { Text("R$ ") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -147,7 +150,6 @@ fun AddDespesaScreen(
                 value = contaSelecionada?.nome ?: "Nenhuma conta para este método",
                 onValueChange = {},
                 readOnly = true,
-                // Desativa o dropdown se não houver contas
                 enabled = contasFiltradas.isNotEmpty(),
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = contaExpanded)
@@ -179,22 +181,20 @@ fun AddDespesaScreen(
         // --- Botão Salvar ---
         Button(
             onClick = {
+                val amount = FormatUtils.parseUserDecimal(valor) ?: 0.0
                 val novaDespesa = Despesa(
                     id = UUID.randomUUID().toString(),
                     data = System.currentTimeMillis(),
-                    local = local,
-                    valor = valor.toDoubleOrNull() ?: 0.0,
-                    metodoPagamento = metodoSelecionado, // ✅ Usa o método correto
-                    contaId = contaSelecionada!!.id // ✅ Usa a conta correta
+                    local = local.trim(),
+                    valor = amount,
+                    metodoPagamento = metodoSelecionado,
+                    contaId = contaSelecionada!!.id
                 )
 
                 vm.addDespesa(novaDespesa)
                 nav.popBackStack()
             },
-            // Só ativa se todos os campos estiverem preenchidos E uma conta válida selecionada
-            enabled = local.isNotBlank()
-                    && valor.isNotBlank()
-                    && contaSelecionada != null,
+            enabled = salvarHabilitado,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Salvar Despesa")
