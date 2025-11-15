@@ -45,8 +45,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// O import do UUID não é necessário aqui
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
@@ -93,7 +91,7 @@ fun HomeScreen(
             }
 
             // --- SEÇÃO DE GANHOS (APENAS DINHEIRO) ---
-            val ganhosDoMes = ganhos.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) != TipoConta.CARTAO_CREDITO }
+            val ganhosDoMes = ganhos.filter { mapaContas[it.contaId] != TipoConta.CARTAO_CREDITO }
             if (ganhosDoMes.isNotEmpty()) {
                 stickyHeader {
                     ListHeader(text = "Ganhos do Mês (Dinheiro)")
@@ -108,7 +106,7 @@ fun HomeScreen(
             }
 
             // --- SEÇÃO DE DESPESAS (APENAS DINHEIRO) ---
-            val despesasDoMes = despesas.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) != TipoConta.CARTAO_CREDITO }
+            val despesasDoMes = despesas.filter { mapaContas[it.contaId] != TipoConta.CARTAO_CREDITO }
             if (despesasDoMes.isNotEmpty()) {
                 stickyHeader {
                     ListHeader(text = "Despesas do Mês (Dinheiro)")
@@ -123,7 +121,7 @@ fun HomeScreen(
             }
 
             // --- NOVA SEÇÃO: DESPESAS DE CARTÃO ---
-            val faturasDoMes = despesas.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) == TipoConta.CARTAO_CREDITO }
+            val faturasDoMes = despesas.filter { mapaContas[it.contaId] == TipoConta.CARTAO_CREDITO }
             if (faturasDoMes.isNotEmpty()) {
                 stickyHeader {
                     ListHeader(text = "Compras no Cartão (Mês)")
