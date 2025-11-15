@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-// Imports do Scaffold e TopAppBar removidos
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -22,13 +21,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-// import androidx.compose.ui.platform.LocalFocusManager (não estava a ser usado)
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.paulo.controle_gastos.model.Conta //
-import com.paulo.controle_gastos.model.TipoConta
-import com.paulo.controle_gastos.viewmodel.FinanceViewModel //
+import com.paulo.controle_gastos.model.Conta
+import com.paulo.controle_gastos.model.TipoConta // ✅ IMPORT CORRETO
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,33 +35,24 @@ fun AddAccountScreen(
     nav: NavController,
     vm: FinanceViewModel
 ) {
-    // val focus = LocalFocusManager.current // Não estava a ser usado
-
     var nome by remember { mutableStateOf("") }
     var saldoInicial by remember { mutableStateOf("") }
     var tipoSelecionado by remember { mutableStateOf(TipoConta.CONTA_CORRENTE) }
     var expanded by remember { mutableStateOf(false) }
 
-    // --- O Scaffold foi REMOVIDO daqui ---
-
-    // A Column agora é o Composable principal
     Column(
         modifier = Modifier
-            // .padding(padding) // Removido, pois 'padding' vinha do Scaffold
-            .padding(16.dp)     // Mantivemos o padding de 16.dp
+            .padding(16.dp)
             .fillMaxSize(),
-        verticalArrangement = Arrangement.Top //
+        verticalArrangement = Arrangement.Top
     ) {
-
         OutlinedTextField(
             value = nome,
             onValueChange = { nome = it },
             label = { Text("Nome da Conta") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = saldoInicial,
             onValueChange = { saldoInicial = it },
@@ -71,9 +60,7 @@ fun AddAccountScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -90,11 +77,11 @@ fun AddAccountScreen(
                     .fillMaxWidth(),
                 label = { Text("Tipo da Conta") }
             )
-
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
+                // ✅ Lê o Enum TipoConta.kt
                 TipoConta.values().forEach { tipo ->
                     DropdownMenuItem(
                         onClick = {
@@ -106,21 +93,21 @@ fun AddAccountScreen(
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(32.dp))
-
         Button(
             onClick = {
                 val novaConta = Conta(
                     id = UUID.randomUUID().toString(),
                     nome = nome,
-                    saldoInicial = saldoInicial.toDoubleOrNull() ?: 0.0,
+                    // Se for cartão, o saldo inicial deve ser 0 (ou o valor da fatura)
+                    // Vamos forçar 0 por enquanto para simplificar
+                    saldoInicial = if(tipoSelecionado == TipoConta.CARTAO_CREDITO) 0.0 else saldoInicial.toDoubleOrNull() ?: 0.0,
                     tipo = tipoSelecionado
-                ) //
-                vm.addConta(novaConta) //
-                nav.popBackStack() // Adicionado para voltar após salvar
+                )
+                vm.addConta(novaConta)
+                nav.popBackStack() // Volta para a tela anterior
             },
-            enabled = nome.isNotBlank() && saldoInicial.isNotBlank(),
+            enabled = nome.isNotBlank() && (saldoInicial.isNotBlank() || tipoSelecionado == TipoConta.CARTAO_CREDITO),
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) {
             Text("Salvar")

@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,14 +34,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.paulo.controle_gastos.model.Despesa
 import com.paulo.controle_gastos.model.Ganho
+import com.paulo.controle_gastos.model.TipoConta
 import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+// O import do UUID não é necessário aqui
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -47,7 +53,7 @@ fun HomeScreen(
     nav: NavController,
     vm: FinanceViewModel
 ) {
-    // 1. Obter o estado e todos os valores do ViewModel
+    // 1. Obter o estado
     val uiState by vm.uiState.collectAsState()
 
     val ganhos = uiState.ganhos
@@ -55,18 +61,21 @@ fun HomeScreen(
     val saldoTotal = uiState.saldoTotal
     val ganhosTotais = uiState.ganhosTotais
     val despesasTotais = uiState.despesasTotais
+    val faturasTotais = uiState.faturasTotais
+    val displayMonth = uiState.displayMonth // ✅✅✅ A CORREÇÃO ESTÁ AQUI ✅✅✅
+
+    val mapaContas = uiState.contas.associate { it.id to it.tipo }
 
     Scaffold(
         topBar = {
-            // (A TopBar "Início" é gerenciada pelo MainActivity agora)
+            // (Gerenciado pelo MainActivity)
         }
-    ) { padding -> // O padding vem do MainActivity
+    ) { padding ->
 
-        // 2. A Lista principal
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding) // Aplicamos o padding aqui
+                .padding(padding)
         ) {
 
             // --- 3. O DASHBOARD HEADER ---
@@ -74,16 +83,22 @@ fun HomeScreen(
                 DashboardHeader(
                     saldoTotal = saldoTotal,
                     ganhosTotais = ganhosTotais,
-                    despesasTotais = despesasTotais
+                    despesasTotais = despesasTotais,
+                    faturasTotais = faturasTotais,
+
+                    displayMonth = displayMonth, // ✅ AGORA FUNCIONA
+                    onNextMonth = { vm.nextMonth() },
+                    onPrevMonth = { vm.previousMonth() }
                 )
             }
 
-            // --- SEÇÃO DE GANHOS ---
-            if (ganhos.isNotEmpty()) {
+            // --- SEÇÃO DE GANHOS (APENAS DINHEIRO) ---
+            val ganhosDoMes = ganhos.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) != TipoConta.CARTAO_CREDITO }
+            if (ganhosDoMes.isNotEmpty()) {
                 stickyHeader {
-                    ListHeader(text = "Ganhos Recentes")
+                    ListHeader(text = "Ganhos do Mês (Dinheiro)")
                 }
-                items(ganhos) { ganho ->
+                items(ganhosDoMes) { ganho ->
                     GanhoItemRow(
                         ganho = ganho,
                         onDeleteClick = { vm.deleteGanho(ganho) }
@@ -92,12 +107,13 @@ fun HomeScreen(
                 }
             }
 
-            // --- SEÇÃO DE DESPESAS ---
-            if (despesas.isNotEmpty()) {
+            // --- SEÇÃO DE DESPESAS (APENAS DINHEIRO) ---
+            val despesasDoMes = despesas.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) != TipoConta.CARTAO_CREDITO }
+            if (despesasDoMes.isNotEmpty()) {
                 stickyHeader {
-                    ListHeader(text = "Despesas Recentes")
+                    ListHeader(text = "Despesas do Mês (Dinheiro)")
                 }
-                items(despesas) { despesa ->
+                items(despesasDoMes) { despesa ->
                     DespesaItemRow(
                         despesa = despesa,
                         onDeleteClick = { vm.deleteDespesa(despesa) }
@@ -106,16 +122,31 @@ fun HomeScreen(
                 }
             }
 
-            // Mensagem de "Vazio" se ambas as listas estiverem vazias
+            // --- NOVA SEÇÃO: DESPESAS DE CARTÃO ---
+            val faturasDoMes = despesas.filter { (mapaContas[it.contaId] ?: TipoConta.CONTA_CORRENTE) == TipoConta.CARTAO_CREDITO }
+            if (faturasDoMes.isNotEmpty()) {
+                stickyHeader {
+                    ListHeader(text = "Compras no Cartão (Mês)")
+                }
+                items(faturasDoMes) { despesa ->
+                    DespesaItemRow(
+                        despesa = despesa,
+                        onDeleteClick = { vm.deleteDespesa(despesa) }
+                    )
+                    HorizontalDivider()
+                }
+            }
+
+            // Mensagem de "Vazio"
             if (ganhos.isEmpty() && despesas.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
-                            .fillParentMaxSize() // Ocupa o espaço da LazyColumn
-                            .padding(top = 100.dp), // Empurra para baixo
+                            .fillParentMaxSize()
+                            .padding(top = 100.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Nenhum ganho ou despesa registrada.")
+                        Text("Nenhum ganho ou despesa neste mês.")
                     }
                 }
             }
@@ -126,13 +157,47 @@ fun HomeScreen(
 // --- TODOS OS COMPOSABLES AUXILIARES ESTÃO AQUI EMBAIXO ---
 
 /**
- * O Header completo do Dashboard
+ * O seletor de mês
+ */
+@Composable
+fun MonthSelector(
+    displayMonth: String,
+    onNextMonth: () -> Unit,
+    onPrevMonth: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(onClick = onPrevMonth) {
+            Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Mês Anterior")
+        }
+        Text(
+            text = displayMonth,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        IconButton(onClick = onNextMonth) {
+            Icon(Icons.Default.ArrowForwardIos, contentDescription = "Próximo Mês")
+        }
+    }
+}
+
+
+/**
+ * O Header completo do Dashboard (Atualizado)
  */
 @Composable
 fun DashboardHeader(
     saldoTotal: Double,
     ganhosTotais: Double,
-    despesasTotais: Double
+    despesasTotais: Double,
+    faturasTotais: Double, // ✅ NOVO PARÂMETRO
+    displayMonth: String,
+    onNextMonth: () -> Unit,
+    onPrevMonth: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -140,8 +205,17 @@ fun DashboardHeader(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // --- 1. Card do Saldo Total ---
-        Text("Saldo Total", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+        // --- 1. Seletor de Mês ---
+        MonthSelector(
+            displayMonth = displayMonth,
+            onNextMonth = onNextMonth,
+            onPrevMonth = onPrevMonth
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- 2. Card do Saldo Total ---
+        Text("Saldo Total (Geral)", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
         Text(
             text = "R$ ${"%.2f".format(saldoTotal)}",
             style = MaterialTheme.typography.headlineLarge,
@@ -149,26 +223,30 @@ fun DashboardHeader(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // --- 2. Barra de Progresso Ganhos vs Despesas ---
-        // (Passa 'saldoTotal' para o param 'ganhos' da barra)
-        CashFlowBar(ganhos = saldoTotal, despesas = despesasTotais)
+        // --- 3. Barra de Progresso (Ganhos vs Despesas em DINHEIRO) ---
+        CashFlowBar(ganhos = ganhosTotais, despesas = despesasTotais)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- 3. Cards de Ganhos e Despesas ---
+        // --- 4. Cards de Ganhos, Despesas, e Faturas (do Mês) ---
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             IncomeExpenseCard(
-                title = "Ganhos",
+                title = "Ganhos (Mês)",
                 value = ganhosTotais,
                 color = Color(0xFF008000) // Verde
             )
             IncomeExpenseCard(
-                title = "Despesas",
+                title = "Despesas (Mês)",
                 value = despesasTotais,
                 color = MaterialTheme.colorScheme.error // Vermelho
+            )
+            IncomeExpenseCard(
+                title = "Faturas (Mês)",
+                value = faturasTotais,
+                color = Color.Gray // Cor neutra para faturas
             )
         }
 
@@ -178,7 +256,7 @@ fun DashboardHeader(
 }
 
 /**
- * A barra de progresso que muda de cor (COM A LÓGICA CORRIGIDA)
+ * A barra de progresso
  */
 @Composable
 fun CashFlowBar(
@@ -187,7 +265,6 @@ fun CashFlowBar(
 ) {
     val total = ganhos + despesas
 
-    // Se o total for 0, desenha uma barra cinza simples e sai
     if (total == 0.0) {
         Box(
             modifier = Modifier
@@ -196,34 +273,30 @@ fun CashFlowBar(
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant) // Cinza (neutro)
         )
-        return // Sai da função
+        return
     }
 
-    // Se o total for > 0, calcula os pesos
     val pesoGanhos = (ganhos / total).toFloat()
     val pesoDespesas = (despesas / total).toFloat()
 
-    // Desenha um Row (linha) com duas caixas que competem pelo espaço
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(30.dp)
             .clip(RoundedCornerShape(8.dp))
     ) {
-        // Caixa de Ganhos (SÓ desenha se o peso for > 0)
         if (pesoGanhos > 0f) {
             Box(
                 modifier = Modifier
-                    .weight(pesoGanhos) // O peso define a largura
+                    .weight(pesoGanhos)
                     .fillMaxHeight()
                     .background(Color(0xFF008000)) // Verde
             )
         }
-        // Caixa de Despesas (SÓ desenha se o peso for > 0)
         if (pesoDespesas > 0f) {
             Box(
                 modifier = Modifier
-                    .weight(pesoDespesas) // O peso define a largura
+                    .weight(pesoDespesas)
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.error) // Vermelho
             )

@@ -14,16 +14,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,32 +42,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.paulo.controle_gastos.model.Conta
+import com.paulo.controle_gastos.model.TipoConta
 import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 
-/**
- * A Tela principal que mostra a lista de contas
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContasScreen(
     nav: NavController,
-    vm: FinanceViewModel // Você já está recebendo o ViewModel
+    vm: FinanceViewModel
 ) {
-    // 1. Coletar o ESTADO COMPLETO do ViewModel
     val uiState by vm.uiState.collectAsState()
 
-    // 2. Pegar TODAS as listas
-    val contas = uiState.contas // Pega a lista de contas
-    val ganhos = uiState.ganhos // Pega a lista de TODOS os ganhos
-    val despesas = uiState.despesas // Pega a lista de TODAS as despesas
+    val contas = uiState.contas
+    val ganhos = uiState.ganhos
+    val despesas = uiState.despesas
+
+    var contaParaPagar by remember { mutableStateOf<Conta?>(null) }
+    var valorAPagar by remember { mutableStateOf(0.0) }
+
+    if (contaParaPagar != null && valorAPagar > 0) {
+        PagarFaturaDialog(
+            fatura = valorAPagar,
+            contaCartao = contaParaPagar!!,
+            contasDeDebito = contas.filter { it.tipo != TipoConta.CARTAO_CREDITO },
+            onDismiss = { contaParaPagar = null },
+            onConfirm = { contaOrigem ->
+                vm.pagarFatura(contaOrigem, contaParaPagar!!, valorAPagar)
+                contaParaPagar = null
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
-            // (A TopBar "Contas" é gerenciada pelo MainActivity agora)
+            // (Gerenciado pelo MainActivity)
         }
     ) { padding ->
 
-        // 3. Verificar se a lista está vazia
         if (contas.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -65,41 +87,43 @@ fun ContasScreen(
                 Text("Nenhuma conta cadastrada.")
             }
         } else {
-            // 4. Se NÃO estiver vazia, mostre a LazyColumn (lista)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // items() é a forma do Compose de criar a lista
                 items(contas) { conta ->
 
-                    // --- AQUI ESTÁ A NOVA LÓGICA ---
-                    // Para CADA conta na lista, calculamos seu saldo individual
+                    // --- ✅ LÓGICA CORRETA DE CÁLCULO ---
 
-                    // 5. Soma todos os ganhos ONDE o contaId == conta.id
                     val ganhosDaConta = ganhos
                         .filter { it.contaId == conta.id }
                         .sumOf { it.valor }
 
-                    // 6. Soma todas as despesas ONDE o contaId == conta.id
-                    //    (e que não sejam "Cartão")
                     val despesasDaConta = despesas
-                        .filter { it.contaId == conta.id && it.metodoPagamento != "Cartão" }
+                        .filter { it.contaId == conta.id }
                         .sumOf { it.valor }
 
-                    // 7. Calcula o Saldo Atual VIVO
-                    val saldoAtual = conta.saldoInicial + ganhosDaConta - despesasDaConta
+                    val saldoAtual = if (conta.tipo == TipoConta.CARTAO_CREDITO) {
+                        // Fatura = (Saldo Inicial) + Despesas - Ganhos (Pagamentos)
+                        conta.saldoInicial + despesasDaConta - ganhosDaConta
+                    } else {
+                        // Saldo = (Saldo Inicial) + Ganhos - Despesas
+                        conta.saldoInicial + ganhosDaConta - despesasDaConta
+                    }
 
-                    // 8. Passamos o saldoAtual para o Composable da linha
                     ContaItemRow(
                         conta = conta,
-                        saldoAtual = saldoAtual, // Passando o saldo vivo
+                        saldoAtual = saldoAtual,
                         onDeleteClick = {
                             vm.deleteConta(conta)
+                        },
+                        onPayClick = {
+                            contaParaPagar = conta
+                            valorAPagar = saldoAtual
                         }
                     )
-                    HorizontalDivider() // Adiciona uma linha divisória
+                    HorizontalDivider()
                 }
             }
         }
@@ -107,15 +131,12 @@ fun ContasScreen(
 }
 
 
-/**
- * Um Composable reutilizável para mostrar uma linha de conta
- * (Modificado para aceitar 'saldoAtual')
- */
 @Composable
 fun ContaItemRow(
     conta: Conta,
-    saldoAtual: Double, // <-- MUDANÇA AQUI
-    onDeleteClick: () -> Unit // Ação de clique para exclusão
+    saldoAtual: Double,
+    onPayClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -123,9 +144,8 @@ fun ContaItemRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Coluna para o Nome e o Saldo
         Column(
-            modifier = Modifier.weight(1f), // Ocupa todo o espaço disponível
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
@@ -135,17 +155,35 @@ fun ContaItemRow(
             )
             Spacer(modifier = Modifier.height(4.dp))
 
-            // --- MUDANÇA AQUI ---
+            // --- ✅ LÓGICA DE TEXTO E COR CORRETA ---
+
+            val (textoSaldo, corSaldo) = if (conta.tipo == TipoConta.CARTAO_CREDITO) {
+                // Para cartão, o saldo é o que você DEVE (Fatura)
+                "Fatura: R$ ${"%.2f".format(saldoAtual)}" to
+                        if (saldoAtual > 0) MaterialTheme.colorScheme.error else Color.Gray
+            } else {
+                // Para contas normais, o saldo é o que você TEM
+                "Saldo: R$ ${"%.2f".format(saldoAtual)}" to
+                        if (saldoAtual < 0) MaterialTheme.colorScheme.error else Color.Gray
+            }
+
             Text(
-                // Mostra o saldoAtual, não o saldoInicial
-                text = "Saldo: R$ ${"%.2f".format(saldoAtual)}",
+                text = textoSaldo,
                 style = MaterialTheme.typography.bodyMedium,
-                // Muda a cor se o saldo for negativo
-                color = if (saldoAtual < 0) MaterialTheme.colorScheme.error else Color.Gray
+                color = corSaldo
             )
         }
 
-        // Ícone de Lixeira (Botão de Excluir)
+        if (conta.tipo == TipoConta.CARTAO_CREDITO && saldoAtual > 0) {
+            IconButton(onClick = onPayClick) {
+                Icon(
+                    imageVector = Icons.Default.Payment,
+                    contentDescription = "Pagar Fatura",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
         IconButton(onClick = onDeleteClick) {
             Icon(
                 imageVector = Icons.Default.Delete,
@@ -154,4 +192,84 @@ fun ContaItemRow(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PagarFaturaDialog(
+    fatura: Double,
+    contaCartao: Conta,
+    contasDeDebito: List<Conta>,
+    onDismiss: () -> Unit,
+    onConfirm: (contaOrigem: Conta) -> Unit
+) {
+    var contaOrigemSelecionada by remember { mutableStateOf(contasDeDebito.firstOrNull()) }
+    var expanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pagar Fatura") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Pagar fatura de R$ ${"%.2f".format(fatura)} do cartão ${contaCartao.nome}?")
+
+                // Dropdown para selecionar a conta de origem
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = contaOrigemSelecionada?.nome ?: "Selecione a conta",
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        label = { Text("Pagar com:") }
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        contasDeDebito.forEach { conta ->
+                            DropdownMenuItem(
+                                // Mostra o saldo da conta de origem para o usuário saber
+                                text = {
+                                    // Precisamos calcular o saldo vivo da conta de débito aqui
+                                    // (Simplificado por agora, mostra apenas o nome)
+                                    // TODO: Calcular o saldo vivo real da conta de débito
+                                    Text(conta.nome)
+                                },
+                                onClick = {
+                                    contaOrigemSelecionada = conta
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (contaOrigemSelecionada != null) {
+                        onConfirm(contaOrigemSelecionada!!)
+                    }
+                },
+                enabled = contaOrigemSelecionada != null
+            ) {
+                Text("Confirmar Pagamento")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

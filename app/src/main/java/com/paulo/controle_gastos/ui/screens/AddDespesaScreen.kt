@@ -26,10 +26,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.paulo.controle_gastos.model.Conta //
-import com.paulo.controle_gastos.model.Despesa //
-import com.paulo.controle_gastos.viewmodel.FinanceViewModel //
+import com.paulo.controle_gastos.model.Conta
+import com.paulo.controle_gastos.model.Despesa
+import com.paulo.controle_gastos.model.TipoConta
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.util.UUID
+
+// ✅ NOVO: Um mapa para ligar o Tipo de Conta ao Método de Pagamento
+private val metodoParaTipoConta = mapOf(
+    "Dinheiro" to listOf(TipoConta.CARTEIRA),
+    "Débito" to listOf(TipoConta.CONTA_CORRENTE, TipoConta.POUPANCA),
+    "Pix" to listOf(TipoConta.CONTA_CORRENTE, TipoConta.POUPANCA),
+    "Cartão de Crédito" to listOf(TipoConta.CARTAO_CREDITO)
+)
+private val metodosDePagamento = listOf("Cartão de Crédito", "Débito", "Pix", "Dinheiro")
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,31 +50,37 @@ fun AddDespesaScreen(
 ) {
     // --- 1. Obter dados do ViewModel ---
     val uiState by vm.uiState.collectAsState()
-    val contas = uiState.contas // Nossa lista de contas cadastradas
+    val todasAsContas = uiState.contas
 
-    // --- 2. Criar Estados para os campos do formulário ---
+    // --- 2. Estados do formulário ---
     var local by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
 
-    // Lista de métodos de pagamento (você pode alterar)
-    val metodosPagamento = listOf("Cartão", "Dinheiro", "Pix", "Débito")
-    var metodoSelecionado by remember { mutableStateOf(metodosPagamento.first()) }
+    // --- ✅ 3. LÓGICA ATUALIZADA (O SEU DESIGN) ---
+
+    // Dropdown 1: Método de Pagamento
+    var metodoSelecionado by remember { mutableStateOf(metodosDePagamento.first()) }
     var metodoExpanded by remember { mutableStateOf(false) }
 
-    // Estados para o Dropdown de Contas
-    var contaExpanded by remember { mutableStateOf(false) }
+    // Dropdown 2: Conta
+    var contasFiltradas by remember { mutableStateOf(emptyList<Conta>()) }
     var contaSelecionada by remember { mutableStateOf<Conta?>(null) }
+    var contaExpanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(contas) {
-        if (contaSelecionada == null && contas.isNotEmpty()) {
-            contaSelecionada = contas.first()
-        }
+    // --- Efeito que liga os dois dropdowns ---
+    LaunchedEffect(metodoSelecionado, todasAsContas) {
+        // 1. Filtra a lista de contas com base no método
+        val tiposPermitidos = metodoParaTipoConta[metodoSelecionado] ?: emptyList()
+        contasFiltradas = todasAsContas.filter { it.tipo in tiposPermitidos }
+
+        // 2. Auto-seleciona a primeira conta da nova lista
+        contaSelecionada = contasFiltradas.firstOrNull()
     }
 
-    // --- 3. Construir a UI (SEM SCAFFOLD) ---
+    // --- 4. UI (SEM SCAFFOLD) ---
     Column(
         modifier = Modifier
-            .padding(16.dp) // O padding vem do AppNavHost no MainActivity
+            .padding(16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -86,7 +103,7 @@ fun AddDespesaScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // --- Dropdown de Método de Pagamento ---
+        // --- Dropdown 1: Método de Pagamento (O Controlador) ---
         ExposedDropdownMenuBox(
             expanded = metodoExpanded,
             onExpandedChange = { metodoExpanded = !metodoExpanded }
@@ -108,7 +125,7 @@ fun AddDespesaScreen(
                 expanded = metodoExpanded,
                 onDismissRequest = { metodoExpanded = false }
             ) {
-                metodosPagamento.forEach { metodo ->
+                metodosDePagamento.forEach { metodo ->
                     DropdownMenuItem(
                         text = { Text(metodo) },
                         onClick = {
@@ -120,15 +137,18 @@ fun AddDespesaScreen(
             }
         }
 
-        // --- Dropdown de Contas (de onde saiu o dinheiro) ---
+        // --- Dropdown 2: Contas (O Controlado) ---
         ExposedDropdownMenuBox(
             expanded = contaExpanded,
             onExpandedChange = { contaExpanded = !contaExpanded }
         ) {
             OutlinedTextField(
-                value = contaSelecionada?.nome ?: "Selecione uma conta", //
+                // Mostra a conta selecionada ou um aviso se a lista estiver vazia
+                value = contaSelecionada?.nome ?: "Nenhuma conta para este método",
                 onValueChange = {},
                 readOnly = true,
+                // Desativa o dropdown se não houver contas
+                enabled = contasFiltradas.isNotEmpty(),
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = contaExpanded)
                 },
@@ -142,9 +162,9 @@ fun AddDespesaScreen(
                 expanded = contaExpanded,
                 onDismissRequest = { contaExpanded = false }
             ) {
-                contas.forEach { conta ->
+                contasFiltradas.forEach { conta ->
                     DropdownMenuItem(
-                        text = { Text(conta.nome) }, //
+                        text = { Text(conta.nome) },
                         onClick = {
                             contaSelecionada = conta
                             contaExpanded = false
@@ -159,19 +179,19 @@ fun AddDespesaScreen(
         // --- Botão Salvar ---
         Button(
             onClick = {
-                // 4. Criar o objeto Despesa e salvar
                 val novaDespesa = Despesa(
                     id = UUID.randomUUID().toString(),
                     data = System.currentTimeMillis(),
                     local = local,
                     valor = valor.toDoubleOrNull() ?: 0.0,
-                    metodoPagamento = metodoSelecionado,
-                    contaId = contaSelecionada!!.id
-                ) //
+                    metodoPagamento = metodoSelecionado, // ✅ Usa o método correto
+                    contaId = contaSelecionada!!.id // ✅ Usa a conta correta
+                )
 
-                vm.addDespesa(novaDespesa) // ✅ Chamando a função do ViewModel
-                nav.popBackStack() // Volta para a tela anterior
+                vm.addDespesa(novaDespesa)
+                nav.popBackStack()
             },
+            // Só ativa se todos os campos estiverem preenchidos E uma conta válida selecionada
             enabled = local.isNotBlank()
                     && valor.isNotBlank()
                     && contaSelecionada != null,
