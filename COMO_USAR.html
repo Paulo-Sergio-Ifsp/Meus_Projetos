@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Como Usar - meu_Busca_Livros</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 15px;
+        }
+
+        .step-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-content {
+            margin-left: 55px;
+            color: #555;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .alert {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            color: #0c5460;
+            margin-bottom: 5px;
+        }
+
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            background: #5568d3;
+        }
+
+        .button-success {
+            background: #28a745;
+        }
+
+        .button-success:hover {
+            background: #218838;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            color: #999;
+        }
+
+        .emoji {
+            font-size: 1.3em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📚 meu_Busca_Livros</h1>
+        <p class="subtitle">Buscador Universal de Livros Gratuitos</p>
+
+        <div class="alert">
+            <div class="alert-title">✨ Super Fácil de Usar!</div>
+            <p>Não precisa saber programar ou usar terminal. Apenas 2 cliques!</p>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                Instale o Python (apenas na primeira vez)
+            </div>
+            <div class="step-content">
+                <p>Se ainda não tem Python instalado:</p>
+                <ul>
+                    <li>Baixe de: <a href="https://www.python.org/downloads/" target="_blank">python.org/downloads</a>
+                    </li>
+                    <li><strong>IMPORTANTE:</strong> Durante a instalação, marque a opção <span class="highlight">"Add
+                            Python to PATH"</span></li>
+                    <li>Clique em "Install Now"</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                Execute o programa
+            </div>
+            <div class="step-content">
+                <p><strong>OPÇÃO A - Com janela minimizada (RECOMENDADO):</strong></p>
+                <p style="font-size: 1.2em; margin: 10px 0;">
+                    <span class="emoji">📄</span> <span class="highlight">Iniciar_Busca_Livros.bat</span>
+                </p>
+                <ul>
+                    <li>A janela será minimizada automaticamente após 2 segundos</li>
+                    <li>Navegador abre automaticamente</li>
+                    <li>Para parar: restaure a janela e pressione Ctrl+C</li>
+                </ul>
+
+                <p style="margin-top: 15px;"><strong>OPÇÃO B - Totalmente invisível (sem janela):</strong></p>
+                <p style="font-size: 1.2em; margin: 10px 0;">
+                    <span class="emoji">🔹</span> <span class="highlight">Iniciar_Invisivel.vbs</span>
+                </p>
+                <ul>
+                    <li>Servidor roda completamente em segundo plano</li>
+                    <li>Nenhuma janela aparece</li>
+                    <li>Para parar: duplo clique em <strong>Parar_Servidor.bat</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                Use a busca
+            </div>
+            <div class="step-content">
+                <p>Na página que abrir:</p>
+                <ol>
+                    <li>Digite o nome do livro no campo de busca</li>
+                    <li>Opcionalmente, digite o autor</li>
+                    <li>Clique em "Buscar"</li>
+                    <li>Clique em "Baixar" no livro desejado</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="alert" style="background: #fff3cd; border-color: #ffc107;">
+            <div class="alert-title" style="color: #856404;">💡 Dica: Crie um atalho!</div>
+            <p>Dê duplo clique em <span class="highlight">Criar_Atalho_Desktop.bat</span> para criar um atalho na sua
+                área de trabalho.</p>
+        </div>
+
+        <h2 style="margin-top: 40px; color: #667eea;">🔧 Resolução de Problemas</h2>
+
+        <div class="step">
+            <div class="step-title" style="background: #dc3545;">
+                ❌ "Python não encontrado"
+            </div>
+            <div class="step-content">
+                <p>Você esqueceu de marcar "Add Python to PATH" durante a instalação.</p>
+                <p><strong>Solução:</strong> Desinstale e reinstale o Python marcando essa opção.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title" style="background: #ffc107; color: #333;">
+                ⚠️ Navegador não abre
+            </div>
+            <div class="step-content">
+                <p>Abra manualmente no seu navegador: <strong>http://127.0.0.1:5000</strong></p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title" style="background: #17a2b8;">
+                ℹ️ Como parar o programa
+            </div>
+            <div class="step-content">
+                <p><strong>Se usou Iniciar_Busca_Livros.bat:</strong></p>
+                <ul>
+                    <li>Restaure a janela minimizada e pressione <strong>Ctrl+C</strong></li>
+                    <li>Ou feche a janela pela barra de tarefas</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>Se usou Iniciar_Invisivel.vbs:</strong></p>
+                <ul>
+                    <li>Dê duplo clique em <strong>Parar_Servidor.bat</strong></li>
+                    <li>Ou abra o Gerenciador de Tarefas e finalize "python.exe"</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 40px; color: #667eea;">📁 Onde ficam os downloads?</h2>
+        <p style="margin: 10px 0;">Os livros são salvos em: <span class="highlight">G:\Livros_Archive</span></p>
+        <p style="color: #666; font-size: 0.9em;">Para mudar isso, edite a linha 22 do arquivo app_search.py</p>
+
+        <div class="footer">
+            <p><strong>meu_Busca_Livros v2.0</strong></p>
+            <p>Desenvolvido com ❤️ para facilitar o acesso ao conhecimento</p>
+        </div>
+    </div>
+</body>
+
+</html>

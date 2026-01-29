@@ -1,0 +1,12 @@
+═══════════════════════════════════════════════════════════════
+  INSTRUÇÕES RÁPIDAS - meu_Busca_Livros
+═══════════════════════════════════════════════════════════════
+
+  1. Duplo clique em "meu_Busca_Livros.exe"
+  2. Aguarde o navegador abrir
+  3. Digite o livro e clique em "Buscar"
+  4. Pronto! 🎉
+
+  Para instruções completas, leia "LEIA-ME.txt"
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,115 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║                    📚 meu_Busca_Livros v2.0                          ║
+║              Buscador de Livros Gratuitos em Fontes Públicas         ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+
+🚀 COMO USAR (SUPER SIMPLES!):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPÇÃO 1 - Com janela minimizada (RECOMENDADO):
+   1. Dê duplo clique em "Iniciar_Busca_Livros.bat"
+   2. A janela será minimizada automaticamente após 2 segundos
+   3. O navegador abrirá automaticamente
+   4. Use normalmente!
+
+OPÇÃO 2 - Totalmente invisível (sem janela):
+   1. Dê duplo clique em "Iniciar_Invisivel.vbs"
+   2. Clique em OK na mensagem
+   3. O navegador abrirá automaticamente
+   4. Para parar: dê duplo clique em "Parar_Servidor.bat"
+
+Digite o nome do livro, clique em "Buscar" e pronto! 🎉
+
+
+📋 PRIMEIRA VEZ USANDO?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Você precisa ter o Python instalado:
+
+1. Baixe de: https://www.python.org/downloads/
+
+2. Durante a instalação, MARQUE a opção:
+   ☑️ "Add Python to PATH"
+
+3. Clique em "Install Now"
+
+4. Depois que instalar, dê duplo clique em "Iniciar_Busca_Livros.bat"
+
+Na primeira execução, as dependências serão instaladas automaticamente.
+Isso pode levar alguns minutos.
+
+
+💡 DICA: CRIE UM ATALHO!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dê duplo clique em "Criar_Atalho_Desktop.bat" para criar um atalho
+na sua área de trabalho. Assim fica ainda mais fácil!
+
+
+📁 ONDE FICAM OS DOWNLOADS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Os livros são salvos em: G:\Livros_Archive
+
+
+✅ FONTES DE BUSCA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Archive.org (Internet Archive)
+✓ Open Library
+✓ Google Books
+✓ Kufunda.net
+✓ Z-Library
+✓ LibGen
+
+
+🐛 PROBLEMAS COMUNS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "Python não encontrado"
+   → Você esqueceu de marcar "Add Python to PATH"
+   → Solução: Desinstale e reinstale o Python marcando essa opção
+
+⚠️ Navegador não abre
+   → Abra manualmente: http://127.0.0.1:5000
+
+❌ Erro ao instalar dependências
+   → Certifique-se de estar conectado à internet
+   → Execute como administrador (botão direito → "Executar como admin")
+
+
+🛑 COMO PARAR O PROGRAMA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se usou OPÇÃO 1 (Iniciar_Busca_Livros.bat):
+   → Restaure a janela minimizada e pressione Ctrl+C
+   → Ou feche a janela pela barra de tarefas
+
+Se usou OPÇÃO 2 (Iniciar_Invisivel.vbs):
+   → Dê duplo clique em "Parar_Servidor.bat"
+   → Ou abra o Gerenciador de Tarefas e finalize "python.exe"
+
+
+⚠️ IMPORTANTE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Este programa busca apenas fontes PÚBLICAS e ABERTAS
+• Respeite os direitos autorais
+• Use apenas para fins educacionais e pessoais
+• Alguns livros podem estar protegidos por direitos autorais
+
+
+📚 MAIS AJUDA?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abra o arquivo "COMO_USAR.html" no seu navegador para
+instruções mais detalhadas com imagens e formatação.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Desenvolvido com ❤️ para facilitar o acesso ao conhecimento
+Última atualização: 29/01/2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

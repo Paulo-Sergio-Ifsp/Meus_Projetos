@@ -1,0 +1,169 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║          GUIA DO DESENVOLVEDOR - Criar Versão Executável            ║
+║                    meu_Busca_Livros v2.0                             ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+
+📦 COMO CRIAR O EXECUTÁVEL:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Certifique-se de que Python está instalado
+
+2. Dê DUPLO CLIQUE em "Criar_Executavel.bat"
+
+3. Aguarde o processo (pode levar 3-5 minutos)
+
+4. O executável será criado em: Distribuir\meu_Busca_Livros.exe
+
+
+✅ O QUE O SCRIPT FAZ AUTOMATICAMENTE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Instala PyInstaller
+✓ Verifica dependências
+✓ Cria executável standalone (um único arquivo .exe)
+✓ Inclui templates HTML e arquivos estáticos
+✓ Cria pasta "Distribuir" com tudo necessário
+✓ Gera documentação para o usuário final
+✓ Limpa arquivos temporários
+✓ Abre a pasta do executável
+
+
+📂 ESTRUTURA DA PASTA "DISTRIBUIR":
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Distribuir/
+├── meu_Busca_Livros.exe      ← Executável principal
+├── LEIA-ME.txt               ← Instruções completas
+└── INICIO_RAPIDO.txt         ← Guia rápido
+
+
+🎯 COMO DISTRIBUIR PARA USUÁRIOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opção 1 - Apenas o .exe:
+   → Envie só o arquivo "meu_Busca_Livros.exe"
+   → Usuário clica 2x e usa
+
+Opção 2 - Pacote completo:
+   → Comprima a pasta "Distribuir" em .zip
+   → Envie o arquivo .zip
+   → Usuário extrai e usa
+
+
+🔧 CONFIGURAÇÕES TÉCNICAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PyInstaller Mode: --onefile (tudo em um único .exe)
+Window Mode: --console (janela de terminal visível)
+Icon: Nenhum (usa ícone padrão Python)
+
+Arquivos incluídos:
+   • frontend/ (templates e static files)
+   • Todas as dependências Python
+   • Flask, BeautifulSoup, Requests, etc.
+
+Tamanho final: ~40-60 MB
+
+
+⚙️ VARIÁVEIS DE AMBIENTE SUPORTADAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DOWNLOADS_DIR
+   └─ Define pasta de downloads
+   └─ Padrão: G:\Livros_Archive
+
+
+🐛 TROUBLESHOOTING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"PyInstaller failed"
+   → Tente: pip install --upgrade pyinstaller
+   → Verifique se tem todas as dependências
+
+"Missing module"
+   → Adicione ao --hidden-import no Criar_Executavel.bat
+   → Execute: pip install -r requirements.txt
+
+"Templates not found"
+   → Verifique se a pasta frontend/ existe
+   → Verifique se app_exe.py tem os paths corretos
+
+Executável muito grande (>100MB)
+   → Normal para aplicações Flask completas
+   → PyInstaller inclui todas as dependências
+
+
+📝 NOTAS IMPORTANTES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• O executável funciona APENAS no Windows
+• Não precisa de Python instalado para rodar
+• Antivírus podem dar falso positivo
+• Primeira execução pode ser lenta (extração)
+• Executável não é assinado digitalmente
+
+
+🔐 ASSINATURA DIGITAL (OPCIONAL):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para evitar avisos de "Publisher Unknown":
+
+1. Obtenha certificado de assinatura de código
+2. Use SignTool.exe (Windows SDK)
+3. Comando:
+   signtool sign /f certificado.pfx /p senha meu_Busca_Livros.exe
+
+
+📊 TESTES RECOMENDADOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Antes de distribuir, teste:
+
+✓ Execução em máquina limpa (sem Python)
+✓ Abertura automática do navegador
+✓ Busca de livros
+✓ Download de arquivos
+✓ Encerramento correto do servidor
+✓ Compatibilidade com antivírus comuns
+
+
+🚀 DISTRIBUIÇÃO EM LARGA ESCALA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GitHub Releases:
+   1. Crie uma release no GitHub
+   2. Anexe o .exe ou .zip
+   3. Usuários baixam diretamente
+
+Plataformas de hospedagem:
+   • Google Drive
+   • OneDrive
+   • Dropbox
+   • MediaFire
+
+ATENÇÃO: Sempre inclua o LEIA-ME.txt para instruções!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DÚVIDAS FREQUENTES:
+
+Q: Por que o .exe é tão grande?
+A: Inclui Python completo + todas as bibliotecas (Flask, BS4, etc.)
+
+Q: Posso criar para Linux/Mac?
+A: Sim, mas precisa compilar em cada sistema operacional
+
+Q: Preciso recompilar a cada mudança no código?
+A: Sim, sempre que modificar Python ou templates
+
+Q: Como atualizar usuários?
+A: Distribua novo .exe, eles só substituem o arquivo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Desenvolvido com ❤️
+Última atualização: 29/01/2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
