@@ -1,11 +1,17 @@
 <resources>
-    <string name="app_name">Controle_Gastos</string>
-    <string name="action_go">Go</string>
-    <string name="baking_title">Baking with Gemini</string>
-    <string name="label_prompt">Prompt</string>
-    <string name="prompt_placeholder">Provide a recipe for the baked goods in the image</string>
-    <string name="image1_description">Cupcake</string>
-    <string name="image2_description">Cookies</string>
-    <string name="image3_description">Cake</string>
-    <string name="results_placeholder">(Results will appear here)</string>
+    <string name="app_name">Controle Gastos</string>
+    <string name="inicio">Início</string>
+    <string name="saldo_total_geral">Saldo Total (Geral)</string>
+    <string name="ganhos_mes">Ganhos (Mês)</string>
+    <string name="despesas_mes">Despesas (Mês)</string>
+    <string name="faturas_mes">Faturas (Mês)</string>
+    <string name="undo">Desfazer</string>
+    <string name="transacao_removida">Transação removida</string>
+    <string name="capture_permissions_title">Captura automática</string>
+    <string name="capture_permissions_subtitle">Ative as permissões abaixo para registrar despesas via SMS e notificações dos bancos.</string>
+    <string name="permission_sms">Permissão de SMS</string>
+    <string name="permission_post_notifications">Permissão de notificações</string>
+    <string name="permission_notification_listener">Acesso às notificações dos apps</string>
+    <string name="permission_grant">Permitir</string>
+    <string name="permission_open_settings">Abrir ajustes</string>
 </resources>

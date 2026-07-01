@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.paulo.controle_gastos.model.Conta
 import com.paulo.controle_gastos.model.TipoConta
+import com.paulo.controle_gastos.util.FormatUtils
 import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,6 +117,9 @@ fun ContasScreen(
                     ContaItemRow(
                         conta = conta,
                         saldoAtual = saldoAtual,
+                        onEditClick = {
+                            nav.navigate("edit_account/${conta.id}")
+                        },
                         onDeleteClick = {
                             vm.deleteConta(conta)
                         },
@@ -135,6 +140,7 @@ fun ContasScreen(
 fun ContaItemRow(
     conta: Conta,
     saldoAtual: Double,
+    onEditClick: () -> Unit,
     onPayClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -155,15 +161,15 @@ fun ContaItemRow(
             )
             Spacer(modifier = Modifier.height(4.dp))
 
-            // --- ✅ LÓGICA DE TEXTO E COR CORRETA ---
+            // --- ✅ LÓGICA DE TEXTO E COR CORRETA (USANDO FormatUtils) ---
 
             val (textoSaldo, corSaldo) = if (conta.tipo == TipoConta.CARTAO_CREDITO) {
                 // Para cartão, o saldo é o que você DEVE (Fatura)
-                "Fatura: R$ ${"%.2f".format(saldoAtual)}" to
+                "Fatura: ${FormatUtils.formatCurrency(saldoAtual)}" to
                         if (saldoAtual > 0) MaterialTheme.colorScheme.error else Color.Gray
             } else {
                 // Para contas normais, o saldo é o que você TEM
-                "Saldo: R$ ${"%.2f".format(saldoAtual)}" to
+                "Saldo: ${FormatUtils.formatCurrency(saldoAtual)}" to
                         if (saldoAtual < 0) MaterialTheme.colorScheme.error else Color.Gray
             }
 
@@ -182,6 +188,14 @@ fun ContaItemRow(
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
+        }
+
+        IconButton(onClick = onEditClick) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Editar Conta",
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
 
         IconButton(onClick = onDeleteClick) {
@@ -211,7 +225,7 @@ fun PagarFaturaDialog(
         title = { Text("Pagar Fatura") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Pagar fatura de R$ ${"%.2f".format(fatura)} do cartão ${contaCartao.nome}?")
+                Text("Pagar fatura de ${FormatUtils.formatCurrency(fatura)} do cartão ${contaCartao.nome}?")
 
                 // Dropdown para selecionar a conta de origem
                 ExposedDropdownMenuBox(

@@ -36,7 +36,8 @@ import java.util.UUID
 @Composable
 fun AddGanhoScreen(
     nav: NavController,
-    vm: FinanceViewModel
+    vm: FinanceViewModel,
+    editId: String? = null
 ) {
     // --- 1. Obter dados do ViewModel ---
     val uiState by vm.uiState.collectAsState()
@@ -45,11 +46,20 @@ fun AddGanhoScreen(
     // --- 2. Estados do formulário ---
     var descricao by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
+    var dataOriginal by remember { mutableStateOf(System.currentTimeMillis()) }
     var expanded by remember { mutableStateOf(false) }
     var contaSelecionada by remember { mutableStateOf<Conta?>(null) }
 
-    LaunchedEffect(contas) {
-        if (contaSelecionada == null && contas.isNotEmpty()) {
+    LaunchedEffect(editId, uiState.ganhos) {
+        if (editId != null) {
+            val ganhoParaEditar = uiState.ganhos.find { it.id == editId }
+            ganhoParaEditar?.let {
+                descricao = it.descricao
+                valor = it.valor.toString()
+                dataOriginal = it.data
+                contaSelecionada = contas.find { c -> c.id == it.contaId }
+            }
+        } else if (contaSelecionada == null && contas.isNotEmpty()) {
             contaSelecionada = contas.first()
         }
     }
@@ -133,21 +143,21 @@ fun AddGanhoScreen(
         Button(
             onClick = {
                 val amount = FormatUtils.parseUserDecimal(valor) ?: 0.0
-                val novoGanho = Ganho(
-                    id = UUID.randomUUID().toString(),
-                    data = System.currentTimeMillis(),
+                val ganho = Ganho(
+                    id = editId ?: UUID.randomUUID().toString(),
+                    data = dataOriginal,
                     descricao = descricao.trim(),
                     valor = amount,
                     contaId = contaSelecionada!!.id
                 )
 
-                vm.addGanho(novoGanho)
+                vm.addGanho(ganho)
                 nav.popBackStack() // Volta para a tela anterior
             },
             enabled = salvarHabilitado,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Salvar Ganho")
+            Text(if (editId == null) "Salvar Ganho" else "Atualizar Ganho")
         }
     }
 }

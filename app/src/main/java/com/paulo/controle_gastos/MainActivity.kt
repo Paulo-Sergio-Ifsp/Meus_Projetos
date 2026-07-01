@@ -1,13 +1,17 @@
 package com.paulo.controle_gastos
 
+// ✅ VERIFIQUE ESTES IMPORTS
+// ✅ ESTE É O IMPORT MAIS IMPORTANTE
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,16 +22,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-// ✅ VERIFIQUE ESTES IMPORTS
-import androidx.lifecycle.viewmodel.compose.viewModel // Importa a função 'viewModel()'
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.paulo.controle_gastos.ui.components.MultiActionFab
 import com.paulo.controle_gastos.ui.navigation.AppNavHost
 import com.paulo.controle_gastos.ui.navigation.Dest
 import com.paulo.controle_gastos.ui.theme.Controle_GastosTheme
-// ✅ ESTE É O IMPORT MAIS IMPORTANTE
-import com.paulo.controle_gastos.viewmodel.FinanceViewModel // Importa a SUA classe
+import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,27 +54,38 @@ class MainActivity : ComponentActivity() {
         @OptIn(ExperimentalMaterial3Api::class)
         Scaffold(
           topBar = {
-            TopAppBar(
-              title = {
-                Text(
-                  when (currentRoute) {
-                    Dest.Home.route -> "Início"
-                    Dest.Contas.route -> "Contas"
-                    Dest.AddAccount.route -> "Adicionar Conta"
-                    Dest.AddGanho.route -> "Adicionar Ganho"
-                    Dest.AddDespesa.route -> "Adicionar Despesa"
-                    else -> "Controle de Gastos"
+            if (currentRoute != Dest.Login.route) {
+              TopAppBar(
+                title = {
+                  Text(
+                    when (currentRoute) {
+                      Dest.Home.route -> "Início"
+                      Dest.Contas.route -> "Contas"
+                      Dest.AddAccount.route -> "Adicionar Conta"
+                      Dest.AddGanho.route -> "Adicionar Ganho"
+                      Dest.AddDespesa.route -> "Adicionar Despesa"
+                      else -> "Controle de Gastos"
+                    }
+                  )
+                },
+                navigationIcon = {
+                  if (currentRoute != Dest.Home.route && currentRoute != Dest.Contas.route) {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                      Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
+                    }
                   }
-                )
-              },
-              navigationIcon = {
-                if (currentRoute != Dest.Home.route && currentRoute != Dest.Contas.route) {
-                  IconButton(onClick = { nav.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBack, "Voltar")
+                },
+                actions = {
+                  val activity = LocalContext.current as? Activity
+                  IconButton(onClick = { activity?.finishAffinity() }) {
+                    Icon(
+                      imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                      contentDescription = "Sair do App"
+                    )
                   }
                 }
-              }
-            )
+              )
+            }
           },
           bottomBar = {
             if (currentRoute == Dest.Home.route || currentRoute == Dest.Contas.route) {
@@ -95,7 +109,7 @@ class MainActivity : ComponentActivity() {
                       restoreState = true
                     }
                   },
-                  icon = { Icon(Icons.Default.List, null) },
+                  icon = { Icon(Icons.AutoMirrored.Filled.List, null) },
                   label = { Text("Contas") }
                 )
               }

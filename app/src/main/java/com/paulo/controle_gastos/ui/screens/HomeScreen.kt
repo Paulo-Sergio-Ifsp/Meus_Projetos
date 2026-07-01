@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,9 +38,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.paulo.controle_gastos.ui.components.CapturePermissionsCard
 import com.paulo.controle_gastos.model.Despesa
 import com.paulo.controle_gastos.model.Ganho
 import com.paulo.controle_gastos.model.TipoConta
+import com.paulo.controle_gastos.util.FormatUtils
 import com.paulo.controle_gastos.viewmodel.FinanceViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,7 +63,7 @@ fun HomeScreen(
     val ganhosTotais = uiState.ganhosTotais
     val despesasTotais = uiState.despesasTotais
     val faturasTotais = uiState.faturasTotais
-    val displayMonth = uiState.displayMonth // ✅✅✅ A CORREÇÃO ESTÁ AQUI ✅✅✅
+    val displayMonth = uiState.displayMonth
 
     val mapaContas = uiState.contas.associate { it.id to it.tipo }
 
@@ -76,6 +79,11 @@ fun HomeScreen(
                 .padding(padding)
         ) {
 
+            // --- Permissões de captura automática ---
+            item {
+                CapturePermissionsCard()
+            }
+
             // --- 3. O DASHBOARD HEADER ---
             item {
                 DashboardHeader(
@@ -83,8 +91,7 @@ fun HomeScreen(
                     ganhosTotais = ganhosTotais,
                     despesasTotais = despesasTotais,
                     faturasTotais = faturasTotais,
-
-                    displayMonth = displayMonth, // ✅ AGORA FUNCIONA
+                    displayMonth = displayMonth,
                     onNextMonth = { vm.nextMonth() },
                     onPrevMonth = { vm.previousMonth() }
                 )
@@ -99,6 +106,7 @@ fun HomeScreen(
                 items(ganhosDoMes) { ganho ->
                     GanhoItemRow(
                         ganho = ganho,
+                        onEditClick = { nav.navigate("edit_ganho/${ganho.id}") },
                         onDeleteClick = { vm.deleteGanho(ganho) }
                     )
                     HorizontalDivider()
@@ -114,6 +122,7 @@ fun HomeScreen(
                 items(despesasDoMes) { despesa ->
                     DespesaItemRow(
                         despesa = despesa,
+                        onEditClick = { nav.navigate("edit_despesa/${despesa.id}") },
                         onDeleteClick = { vm.deleteDespesa(despesa) }
                     )
                     HorizontalDivider()
@@ -129,6 +138,7 @@ fun HomeScreen(
                 items(faturasDoMes) { despesa ->
                     DespesaItemRow(
                         despesa = despesa,
+                        onEditClick = { nav.navigate("edit_despesa/${despesa.id}") },
                         onDeleteClick = { vm.deleteDespesa(despesa) }
                     )
                     HorizontalDivider()
@@ -192,7 +202,7 @@ fun DashboardHeader(
     saldoTotal: Double,
     ganhosTotais: Double,
     despesasTotais: Double,
-    faturasTotais: Double, // ✅ NOVO PARÂMETRO
+    faturasTotais: Double,
     displayMonth: String,
     onNextMonth: () -> Unit,
     onPrevMonth: () -> Unit
@@ -215,7 +225,7 @@ fun DashboardHeader(
         // --- 2. Card do Saldo Total ---
         Text("Saldo Total (Geral)", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
         Text(
-            text = "R$ ${"%.2f".format(saldoTotal)}",
+            text = FormatUtils.formatCurrency(saldoTotal),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -310,7 +320,7 @@ fun IncomeExpenseCard(title: String, value: Double, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = title, style = MaterialTheme.typography.labelMedium)
         Text(
-            text = "R$ ${"%.2f".format(value)}",
+            text = FormatUtils.formatCurrency(value),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = color
@@ -339,7 +349,6 @@ fun ListHeader(text: String) {
 /**
  * Helper para formatar a data (Long) para "dd/MM/yyyy"
  */
-@Composable
 private fun formatarData(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     return sdf.format(Date(timestamp))
@@ -351,6 +360,7 @@ private fun formatarData(timestamp: Long): String {
 @Composable
 fun GanhoItemRow(
     ganho: Ganho,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     Row(
@@ -378,19 +388,29 @@ fun GanhoItemRow(
         }
 
         Text(
-            text = "+ R$ ${"%.2f".format(ganho.valor)}",
+            text = "+ ${FormatUtils.formatCurrency(ganho.valor)}",
             style = MaterialTheme.typography.bodyLarge,
             color = Color(0xFF008000), // Verde
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 
-        IconButton(onClick = onDeleteClick) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Excluir Ganho",
-                tint = MaterialTheme.colorScheme.error
-            )
+        Row {
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Editar Ganho",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Excluir Ganho",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
@@ -401,6 +421,7 @@ fun GanhoItemRow(
 @Composable
 fun DespesaItemRow(
     despesa: Despesa,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     Row(
@@ -428,19 +449,29 @@ fun DespesaItemRow(
         }
 
         Text(
-            text = "- R$ ${"%.2f".format(despesa.valor)}",
+            text = "- ${FormatUtils.formatCurrency(despesa.valor)}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error, // Vermelho
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 
-        IconButton(onClick = onDeleteClick) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Excluir Despesa",
-                tint = MaterialTheme.colorScheme.error
-            )
+        Row {
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Editar Despesa",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            IconButton(onClick = onDeleteClick) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Excluir Despesa",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

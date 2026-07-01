@@ -16,6 +16,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,12 +35,25 @@ import java.util.UUID
 @Composable
 fun AddAccountScreen(
     nav: NavController,
-    vm: FinanceViewModel
+    vm: FinanceViewModel,
+    editId: String? = null
 ) {
+    val uiState by vm.uiState.collectAsState()
     var nome by remember { mutableStateOf("") }
     var saldoInicial by remember { mutableStateOf("") }
     var tipoSelecionado by remember { mutableStateOf(TipoConta.CONTA_CORRENTE) }
     var expanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(editId, uiState.contas) {
+        if (editId != null) {
+            val contaParaEditar = uiState.contas.find { it.id == editId }
+            contaParaEditar?.let {
+                nome = it.nome
+                saldoInicial = it.saldoInicial.toString()
+                tipoSelecionado = it.tipo
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -96,21 +111,21 @@ fun AddAccountScreen(
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
-                val novaConta = Conta(
-                    id = UUID.randomUUID().toString(),
+                val conta = Conta(
+                    id = editId ?: UUID.randomUUID().toString(),
                     nome = nome,
                     // Se for cartão, o saldo inicial deve ser 0 (ou o valor da fatura)
                     // Vamos forçar 0 por enquanto para simplificar
                     saldoInicial = if(tipoSelecionado == TipoConta.CARTAO_CREDITO) 0.0 else saldoInicial.toDoubleOrNull() ?: 0.0,
                     tipo = tipoSelecionado
                 )
-                vm.addConta(novaConta)
+                vm.addConta(conta)
                 nav.popBackStack() // Volta para a tela anterior
             },
             enabled = nome.isNotBlank() && (saldoInicial.isNotBlank() || tipoSelecionado == TipoConta.CARTAO_CREDITO),
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) {
-            Text("Salvar")
+            Text(if (editId == null) "Salvar" else "Atualizar")
         }
     }
 }

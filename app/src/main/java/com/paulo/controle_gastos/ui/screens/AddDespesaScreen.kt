@@ -46,7 +46,8 @@ private val metodosDePagamento = listOf("Cartão de Crédito", "Débito", "Pix",
 @Composable
 fun AddDespesaScreen(
     nav: NavController,
-    vm: FinanceViewModel
+    vm: FinanceViewModel,
+    editId: String? = null
 ) {
     // --- 1. Obter dados do ViewModel ---
     val uiState by vm.uiState.collectAsState()
@@ -55,6 +56,7 @@ fun AddDespesaScreen(
     // --- 2. Estados do formulário ---
     var local by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
+    var dataOriginal by remember { mutableStateOf(System.currentTimeMillis()) }
 
     // --- 3. LÓGICA ATUALIZADA (O SEU DESIGN) ---
 
@@ -67,11 +69,27 @@ fun AddDespesaScreen(
     var contaSelecionada by remember { mutableStateOf<Conta?>(null) }
     var contaExpanded by remember { mutableStateOf(false) }
 
+    // --- Efeito para carregar dados se for edição ---
+    LaunchedEffect(editId, uiState.despesas) {
+        if (editId != null) {
+            val despesaParaEditar = uiState.despesas.find { it.id == editId }
+            despesaParaEditar?.let {
+                local = it.local
+                valor = it.valor.toString()
+                metodoSelecionado = it.metodoPagamento
+                dataOriginal = it.data
+                contaSelecionada = todasAsContas.find { c -> c.id == it.contaId }
+            }
+        }
+    }
+
     // --- Efeito que liga os dois dropdowns ---
     LaunchedEffect(metodoSelecionado, todasAsContas) {
         val tiposPermitidos = metodoParaTipoConta[metodoSelecionado] ?: emptyList()
         contasFiltradas = todasAsContas.filter { it.tipo in tiposPermitidos }
-        contaSelecionada = contasFiltradas.firstOrNull()
+        if (contaSelecionada == null || contaSelecionada?.tipo !in tiposPermitidos) {
+            contaSelecionada = contasFiltradas.firstOrNull()
+        }
     }
 
     // --- Validação: habilita botão somente se valor parseável e local preenchido e conta selecionada ---
@@ -182,22 +200,22 @@ fun AddDespesaScreen(
         Button(
             onClick = {
                 val amount = FormatUtils.parseUserDecimal(valor) ?: 0.0
-                val novaDespesa = Despesa(
-                    id = UUID.randomUUID().toString(),
-                    data = System.currentTimeMillis(),
+                val despesa = Despesa(
+                    id = editId ?: UUID.randomUUID().toString(),
+                    data = dataOriginal,
                     local = local.trim(),
                     valor = amount,
                     metodoPagamento = metodoSelecionado,
                     contaId = contaSelecionada!!.id
                 )
 
-                vm.addDespesa(novaDespesa)
+                vm.addDespesa(despesa)
                 nav.popBackStack()
             },
             enabled = salvarHabilitado,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Salvar Despesa")
+            Text(if (editId == null) "Salvar Despesa" else "Atualizar Despesa")
         }
     }
 }
